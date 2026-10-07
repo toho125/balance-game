@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>숟가락딱밤 마려운 식사예절</title>
+<meta name="description" content="둘 중 누구에게 숟가락 딱밤을 날릴까? 식사예절 밸런스게임">
+<meta property="og:title" content="숟가락딱밤 마려운 식사예절">
+<meta property="og:description" content="둘 중 누구에게 숟가락 딱밤을 날릴까?">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥄</text></svg>">
+<style>
+  :root {
+    --bg: #fff8ef;
+    --card: #ffffff;
+    --ink: #2b2118;
+    --muted: #8a7a6a;
+    --a: #ff6b4a;
+    --b: #3d8bfd;
+    --line: #eadfce;
+    --shadow: 0 6px 20px rgba(60, 40, 20, .12);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    display: flex;
+    justify-content: center;
+  }
+  .app {
+    width: 100%;
+    max-width: 480px;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+  }
+  .screen { display: none; flex: 1; flex-direction: column; }
+  .screen.on { display: flex; }
+
+  /* 시작 화면 */
+  #start { justify-content: center; align-items: center; text-align: center; gap: 20px; }
+  .spoon { font-size: 72px; animation: flick 1.2s ease-in-out infinite; transform-origin: 70% 80%; }
+  @keyframes flick { 0%, 60%, 100% { transform: rotate(0); } 75% { transform: rotate(-35deg); } 85% { transform: rotate(10deg); } }
+  h1 { font-size: 30px; line-height: 1.3; word-break: keep-all; }
+  h1 em { font-style: normal; color: var(--a); }
+  .sub { color: var(--muted); font-size: 16px; line-height: 1.5; word-break: keep-all; }
+  .btn {
+    border: 0;
+    border-radius: 14px;
+    background: var(--ink);
+    color: #fff;
+    font: inherit;
+    font-size: 18px;
+    font-weight: 700;
+    padding: 16px 28px;
+    width: 100%;
+    max-width: 320px;
+    cursor: pointer;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn.ghost { background: transparent; color: var(--ink); border: 2px solid var(--line); }
+
+  /* 문제 화면 */
+  .top { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .count { font-weight: 700; font-size: 15px; color: var(--muted); white-space: nowrap; }
+  .bar { flex: 1; height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: var(--a); border-radius: 99px; transition: width .3s; }
+  .round {
+    align-self: center;
+    background: var(--a);
+    color: #fff;
+    font-weight: 800;
+    font-size: 14px;
+    padding: 4px 14px;
+    border-radius: 99px;
+    margin-bottom: 8px;
+  }
+  .q { font-size: 20px; font-weight: 800; text-align: center; margin-bottom: 12px; word-break: keep-all; }
+  .choices { flex: 1; display: flex; flex-direction: row; align-items: stretch; gap: 10px; position: relative; max-height: 70vh; max-height: 70dvh; }
+  .choice {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--card);
+    border: 3px solid transparent;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    text-align: center;
+    transition: transform .15s, opacity .25s, border-color .2s;
+  }
+  .choice:active { transform: scale(.98); }
+  .choice img {
+    width: 100%;
+    flex: 1 1 auto;
+    height: 40vh;
+    height: 40dvh;
+    min-height: 160px;
+    object-fit: cover;
+    display: block;
+    background: #f1e8dc;
+  }
+  .choice span {
+    display: block;
+    padding: 12px 8px;
+    min-height: 76px;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.35;
+    word-break: keep-all;
+  }
+  .choice.a span::before { content: "A "; color: var(--a); }
+  .choice.b span::before { content: "B "; color: var(--b); }
+  .vs {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: #fff;
+    font-weight: 900;
+    font-size: 18px;
+    display: grid;
+    place-items: center;
+    border: 4px solid var(--bg);
+    z-index: 2;
+    pointer-events: none;
+  }
+  .choices.done .choice { pointer-events: none; }
+  .choice.picked.a { border-color: var(--a); }
+  .choice.picked.b { border-color: var(--b); }
+  .choice.dim { opacity: .35; }
+  .choice.picked { animation: hit .45s; }
+  @keyframes hit { 0% { transform: scale(1); } 30% { transform: scale(.94) rotate(-1deg); } 60% { transform: scale(1.02) rotate(1deg); } 100% { transform: scale(1); } }
+  .pow {
+    position: absolute;
+    font-size: 64px;
+    z-index: 3;
+    pointer-events: none;
+    animation: pow .6s ease-out forwards;
+  }
+  @keyframes pow { 0% { transform: translate(-50%, -50%) scale(.3) rotate(-40deg); opacity: 0; } 40% { transform: translate(-50%, -50%) scale(1.2) rotate(10deg); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1) rotate(0); opacity: 1; } }
+
+  /* 결과 화면 */
+  #result { gap: 14px; }
+  #result h2 { font-size: 24px; text-align: center; margin-top: 8px; word-break: keep-all; }
+  #result .sub { text-align: center; }
+  .winner {
+    background: var(--card);
+    border: 3px solid var(--a);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    text-align: center;
+    animation: hit .6s;
+  }
+  .winner img { width: 100%; height: 34vh; height: 34dvh; min-height: 180px; object-fit: cover; display: block; }
+  .winner p { padding: 14px 12px 16px; }
+  .winner small { display: block; color: var(--a); font-weight: 800; font-size: 15px; margin-bottom: 4px; }
+  .winner b { font-size: 22px; line-height: 1.35; word-break: keep-all; }
+  .rank {
+    width: 40px;
+    flex-shrink: 0;
+    text-align: center;
+    font-weight: 900;
+    font-size: 16px;
+    color: var(--muted);
+  }
+  .list { display: flex; flex-direction: column; gap: 10px; }
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--card);
+    border-radius: 14px;
+    padding: 10px;
+    box-shadow: var(--shadow);
+  }
+  .row img { width: 64px; height: 64px; border-radius: 10px; object-fit: cover; flex-shrink: 0; }
+  .row div { min-width: 0; }
+  .row small { display: block; color: var(--muted); font-size: 13px; margin-bottom: 2px; }
+  .row b { font-size: 16px; word-break: keep-all; }
+  .row s { display: block; color: var(--muted); font-size: 13px; text-decoration: none; margin-top: 2px; word-break: keep-all; }
+  .actions { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 8px; }
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 32px;
+    transform: translateX(-50%);
+    background: var(--ink);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 99px;
+    font-size: 15px;
+    opacity: 0;
+    transition: opacity .2s;
+    pointer-events: none;
+  }
+  .toast.on { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <section class="screen on" id="start">
+    <div class="spoon">🥄</div>
+    <h1><em>숟가락딱밤</em> 마려운<br>식사예절</h1>
+    <p class="sub">같이 밥 먹는 사람이 이러면?<br>둘 중 <b>딱밤 한 대</b> 날리고 싶은 쪽을 골라주세요!</p>
+    <button class="btn" id="startBtn">시작하기</button>
+  </section>
+
+  <section class="screen" id="game">
+    <div class="top">
+      <span class="count" id="count">1 / 9</span>
+      <div class="bar"><i id="bar"></i></div>
+    </div>
+    <span class="round" id="round">1라운드</span>
+    <p class="q">누구에게 숟가락 딱밤? 🥄</p>
+    <div class="choices" id="choices">
+      <button class="choice a" data-side="0"><img alt=""><span></span></button>
+      <div class="vs">VS</div>
+      <button class="choice b" data-side="1"><img alt=""><span></span></button>
+    </div>
+  </section>
+
+  <section class="screen" id="result">
+    <h2>🏆 숟가락딱밤 1위 🏆</h2>
+    <div class="winner" id="winner"></div>
+    <p class="sub">전체 순위</p>
+    <div class="list" id="list"></div>
+    <div class="actions">
+      <button class="btn" id="shareBtn">친구에게 공유하기</button>
+      <button class="btn ghost" id="againBtn">다시 하기</button>
+    </div>
+  </section>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+  // 항목 번호 = 사진 파일 이름 (1.jpg ~ 10.jpg)
+  const items = {
+    1: "쩝쩝충",
+    2: "그릇 손바닥에 올리고 먹기",
+    3: "입안에 음식물 다 보여주며 말하기",
+    4: "젓가락질 이상하게 하기",
+    5: "숟가락이나 젓가락으로 식탁 치기",
+    6: "둘이 먹는데 2분 만에 먹고 기다리기",
+    7: "젓가락으로 사람 가리키기",
+    8: "음식 뒤적거리기",
+    9: "종업원 하대하기",
+    10: "공용음식에 개인 식기도구 사용하기"
+  };
+
+  // 1라운드 대진 (이후 라운드는 이긴 항목끼리 순서대로 붙음)
+  const firstRound = [
+    [1, 3],
+    [4, 7],
+    [8, 10],
+    [2, 6],
+    [5, 9]
+  ];
+  const totalMatches = Object.keys(items).length - 1;
+
+  const $ = id => document.getElementById(id);
+  const screens = ["start", "game", "result"];
+  const choiceEls = document.querySelectorAll(".choice");
+  let round = 1;
+  let matches = [];      // 이번 라운드 대진
+  let matchIndex = 0;    // 이번 라운드에서 몇 번째 판인지
+  let winners = [];      // 이번 라운드에서 올라간 항목
+  let played = 0;        // 지금까지 끝난 판 수
+  let outRound = {};     // 항목별 탈락한 라운드
+
+  // 사진 미리 불러오기
+  Object.keys(items).forEach(n => { new Image().src = n + ".jpg"; });
+
+  function show(name) {
+    screens.forEach(s => $(s).classList.toggle("on", s === name));
+    window.scrollTo(0, 0);
+  }
+
+  function roundName(count) {
+    if (count === 2) return "결승";
+    if (count <= 4) return "준결승";
+    return round + "라운드";
+  }
+
+  // 올라간 항목들로 다음 라운드 대진 만들기 (홀수면 한 명 무작위 부전승)
+  function nextRound(list) {
+    round++;
+    matches = [];
+    matchIndex = 0;
+    winners = [];
+    list = list.slice();
+    if (list.length % 2 === 1) {
+      const lucky = list.splice(Math.floor(Math.random() * list.length), 1)[0];
+      winners.push(lucky);
+      setTimeout(() => toast("🍀 " + items[lucky] + " 부전승!"), 300);
+    }
+    for (let i = 0; i < list.length; i += 2) matches.push([list[i], list[i + 1]]);
+    $("round").textContent = roundName(list.length + winners.length);
+  }
+
+  function renderQuestion() {
+    const pair = matches[matchIndex];
+    $("count").textContent = (played + 1) + " / " + totalMatches;
+    $("bar").style.width = (played / totalMatches * 100) + "%";
+    $("choices").classList.remove("done");
+    document.querySelectorAll(".pow").forEach(p => p.remove());
+    choiceEls.forEach((el, i) => {
+      const n = pair[i];
+      el.classList.remove("picked", "dim");
+      el.querySelector("img").src = n + ".jpg";
+      el.querySelector("img").alt = items[n];
+      el.querySelector("span").textContent = items[n];
+    });
+  }
+
+  function pick(side) {
+    const pair = matches[matchIndex];
+    winners.push(pair[side]);
+    outRound[pair[1 - side]] = round;
+    played++;
+    $("choices").classList.add("done");
+    $("bar").style.width = (played / totalMatches * 100) + "%";
+
+    choiceEls.forEach((el, i) => el.classList.add(i === side ? "picked" : "dim"));
+    const target = choiceEls[side];
+    const pow = document.createElement("div");
+    pow.className = "pow";
+    pow.textContent = "💥";
+    pow.style.left = (target.offsetLeft + target.offsetWidth / 2) + "px";
+    pow.style.top = (target.offsetTop + target.offsetHeight * 0.4) + "px";
+    $("choices").appendChild(pow);
+    if (navigator.vibrate) navigator.vibrate(40);
+
+    setTimeout(() => {
+      matchIndex++;
+      if (matchIndex < matches.length) {
+        renderQuestion();
+      } else if (winners.length === 1) {
+        renderResult(winners[0]);
+      } else {
+        nextRound(winners);
+        renderQuestion();
+      }
+    }, 900);
+  }
+
+  function renderResult(champ) {
+    $("winner").innerHTML = `
+      <img src="${champ}.jpg" alt="${items[champ]}">
+      <p><small>🥄 딱밤 1순위 🥄</small><b>${items[champ]}</b></p>`;
+
+    // 늦게 탈락할수록 높은 순위 (같은 라운드 탈락은 공동 순위)
+    const others = Object.keys(outRound).map(Number).sort((x, y) => outRound[y] - outRound[x]);
+    $("list").innerHTML = others.map(n => {
+      const rank = 2 + others.filter(m => outRound[m] > outRound[n]).length;
+      const tie = others.filter(m => outRound[m] === outRound[n]).length > 1;
+      return `
+      <div class="row">
+        <span class="rank">${tie ? "공동<br>" : ""}${rank}위</span>
+        <img src="${n}.jpg" alt="">
+        <div><b>${items[n]}</b></div>
+      </div>`;
+    }).join("");
+    show("result");
+  }
+
+  function start() {
+    round = 1;
+    matches = firstRound.map(p => p.slice());
+    matchIndex = 0;
+    winners = [];
+    played = 0;
+    outRound = {};
+    $("round").textContent = roundName(10);
+    renderQuestion();
+    show("game");
+  }
+
+  function toast(msg) {
+    const t = $("toast");
+    t.textContent = msg;
+    t.classList.add("on");
+    setTimeout(() => t.classList.remove("on"), 1800);
+  }
+
+  async function share() {
+    const data = { title: document.title, text: "둘 중 누구에게 숟가락 딱밤? 🥄", url: location.href };
+    if (navigator.share) {
+      try { await navigator.share(data); } catch (e) {}
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(location.href);
+      toast("주소를 복사했어요!");
+    } catch (e) {
+      toast(location.href);
+    }
+  }
+
+  $("startBtn").addEventListener("click", start);
+  $("againBtn").addEventListener("click", start);
+  $("shareBtn").addEventListener("click", share);
+  choiceEls.forEach(el => el.addEventListener("click", () => pick(Number(el.dataset.side))));
+</script>
+</body>
+</html>
